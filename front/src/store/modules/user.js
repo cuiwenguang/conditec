@@ -1,10 +1,12 @@
-import { login, logout, getInfo } from '@/api/login'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import axios from 'axios'
+import { getToken, setToken } from '@/utils/auth'
 
 const user = {
   state: {
     token: getToken(),
+    username: '',
     name: '',
+    job: '',
     avatar: '',
     roles: []
   },
@@ -13,8 +15,14 @@ const user = {
     SET_TOKEN: (state, token) => {
       state.token = token
     },
+    SET_USERNAME: (state, username) => {
+      state.username = username
+    },
     SET_NAME: (state, name) => {
       state.name = name
+    },
+    SET_JOB: (state, job) => {
+      state.job = job
     },
     SET_AVATAR: (state, avatar) => {
       state.avatar = avatar
@@ -27,60 +35,51 @@ const user = {
   actions: {
     // 登录
     Login({ commit }, userInfo) {
-      const username = userInfo.username.trim()
       return new Promise((resolve, reject) => {
-        login(username, userInfo.password).then(response => {
-          const data = response.data
-          setToken(data.token)
-          commit('SET_TOKEN', data.token)
+        debugger
+        axios({
+          method: 'post',
+          url: '/o/token/',
+          baseURL: process.env.BASE_API, // api的base_url
+          timeout: 15000, // 请求超时时间
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          auth: {
+            username: 'xaU6yr60kA2HCQpnTwfC3X5ElXrb4ddRqo7zBADZ',
+            password: '066kzs7bB3lTDQWIgXdSTYKBc9DXMne5pM6M4lLfVqmRqg35uvsk5GAuqRmXqBTkbG0ggqe4kFfdSQucxzYQfWFyZwnNfM2QsW0gM2VDbPzeecjbRQrLKZ0WCAK0VcXT'
+          },
+          data: userInfo,
+          transformRequest: [function(items) {
+            let ret = ''
+            for (const it in items) {
+              ret += encodeURIComponent(it) + '=' + encodeURIComponent(items[it]) + '&'
+            }
+            return ret
+          }]
+        }).then((res) => {
+          debugger
+          commit('SET_TOKEN', res.data.access_tokken)
+          setToken(res.data.access_tokken)
           resolve()
-        }).catch(error => {
-          reject(error)
-        })
-      })
-    },
-
-    // 获取用户信息
-    GetInfo({ commit, state }) {
-      return new Promise((resolve, reject) => {
-        getInfo(state.token).then(response => {
-          const data = response.data
-          if (data.roles && data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
-            commit('SET_ROLES', data.roles)
-          } else {
-            reject('getInfo: roles must be a non-null array !')
+        }).catch(err => {
+          const ret = {
+            status: 500,
+            message: '服务器发生错误'
           }
-          commit('SET_NAME', data.name)
-          commit('SET_AVATAR', data.avatar)
-          resolve(response)
-        }).catch(error => {
-          reject(error)
+          if (err.response.status === 400 || err.response.status === 401) {
+            ret.status = err.response.status
+            ret.message = '错误的用户名或密码'
+          }
+          reject(ret)
         })
       })
     },
 
-    // 登出
-    LogOut({ commit, state }) {
-      return new Promise((resolve, reject) => {
-        logout(state.token).then(() => {
-          commit('SET_TOKEN', '')
-          commit('SET_ROLES', [])
-          removeToken()
-          resolve()
-        }).catch(error => {
-          reject(error)
-        })
-      })
-    },
-
-    // 前端 登出
-    FedLogOut({ commit }) {
-      return new Promise(resolve => {
-        commit('SET_TOKEN', '')
-        removeToken()
-        resolve()
-      })
-    }
+    // 获取个人信息
+    GetInfo({ commit }) {
+      return {}
+    } 
   }
 }
 
