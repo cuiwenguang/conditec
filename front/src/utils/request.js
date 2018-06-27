@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message, MessageBox } from 'element-ui'
+import { MessageBox } from 'element-ui'
 import store from '../store'
 import { getToken } from '@/utils/auth'
 
@@ -24,42 +24,29 @@ service.interceptors.request.use(config => {
 // respone拦截器
 service.interceptors.response.use(
   response => {
-  /**
-  * code为非20000是抛错 可结合自己业务进行修改
-  */
-    const res = response.data
-    if (res.code !== 200) {
-      Message({
-        message: res.message,
-        type: 'error',
-        duration: 5 * 1000
-      })
-
-      // 400:非法的token;   401:Token 过期了;
-      if (res.code === 400 || res.code === 401) {
-        MessageBox.confirm('你已被登出，可以取消继续留在该页面，或者重新登录', '确定登出', {
-          confirmButtonText: '重新登录',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          store.dispatch('FedLogOut').then(() => {
-            location.reload()// 为了重新实例化vue-router对象 避免bug
-          })
-        })
-      }
-      return Promise.reject('error')
-    } else {
-      return response.data
-    }
+    // 预留做拦截处理
+    return response.data
   },
   error => {
-    console.log('err' + error)// for debug
-    Message({
-      message: error.message,
-      type: 'error',
-      duration: 5 * 1000
-    })
-    return Promise.reject(error)
+    // 服务器登陆失败
+    if (error.response.status === 400 || error.response.status === 401) {
+      MessageBox.confirm('你已被登出，可以取消继续留在该页面，或者重新登录', '确定登出', {
+        confirmButtonText: '重新登录',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        store.dispatch('FedLogOut').then(() => {
+          location.reload()// 为了重新实例化vue-router对象 避免bug
+        })
+      })
+    }
+    if (error.response.status === 403) {
+      MessageBox.alert('你没有权限，请联系管理员')
+    }
+    if (error.response.status >= 500) {
+      MessageBox.alert('服务器出现错误，请联系开发商处理')
+    }
+    return Promise.reject('error')
   }
 )
 

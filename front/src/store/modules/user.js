@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { getToken, setToken } from '@/utils/auth'
+import request from '@/utils/request'
+import { getToken, setToken, removeToken } from '@/utils/auth'
 
 const user = {
   state: {
@@ -36,18 +37,13 @@ const user = {
     // 登录
     Login({ commit }, userInfo) {
       return new Promise((resolve, reject) => {
-        debugger
         axios({
           method: 'post',
-          url: '/o/token/',
+          url: '/api/auth/',
           baseURL: process.env.BASE_API, // api的base_url
           timeout: 15000, // 请求超时时间
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          auth: {
-            username: 'xaU6yr60kA2HCQpnTwfC3X5ElXrb4ddRqo7zBADZ',
-            password: '066kzs7bB3lTDQWIgXdSTYKBc9DXMne5pM6M4lLfVqmRqg35uvsk5GAuqRmXqBTkbG0ggqe4kFfdSQucxzYQfWFyZwnNfM2QsW0gM2VDbPzeecjbRQrLKZ0WCAK0VcXT'
           },
           data: userInfo,
           transformRequest: [function(items) {
@@ -58,9 +54,8 @@ const user = {
             return ret
           }]
         }).then((res) => {
-          debugger
-          commit('SET_TOKEN', res.data.access_tokken)
-          setToken(res.data.access_tokken)
+          commit('SET_TOKEN', res.data.token)
+          setToken(res.data.token)
           resolve()
         }).catch(err => {
           const ret = {
@@ -78,8 +73,28 @@ const user = {
 
     // 获取个人信息
     GetInfo({ commit }) {
-      return {}
-    } 
+      return new Promise((resolve, reject) => {
+        request.get('/api/system/users/0/')
+          .then(function(res) {
+            commit('SET_USERNAME', res.username)
+            commit('SET_USERNAME', res.first_name)
+            commit('SET_USERNAME', res.last_name)
+            commit('SET_AVATAR', '')
+            commit('SET_ROLES', res.groups)
+            resolve(res)
+          })
+          .catch(error => reject(error))
+      })
+    },
+
+    // 登出
+    FedLogOut({ commit }) {
+      return new Promise(resolve => {
+        commit('SET_TOKEN', '')
+        removeToken()
+        resolve()
+      })
+    }
   }
 }
 

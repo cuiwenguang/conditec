@@ -19,27 +19,6 @@ export default {
     Navbar,
     Sidebar,
     AppMain
-  },
-  mixins: [ResizeMixin],
-  computed: {
-    sidebar() {
-      return this.$store.state.app.sidebar
-    },
-    device() {
-      return this.$store.state.app.device
-    },
-    classObj() {
-      return {
-        hideSidebar: !this.sidebar.opened,
-        withoutAnimation: this.sidebar.withoutAnimation,
-        mobile: this.device === 'mobile'
-      }
-    }
-  },
-  methods: {
-    handleClickOutside() {
-      this.$store.dispatch('CloseSideBar', { withoutAnimation: false })
-    }
   }
 }
 </script>

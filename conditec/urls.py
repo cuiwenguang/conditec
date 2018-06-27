@@ -19,17 +19,23 @@ from django.views.generic.base import TemplateView
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_swagger.views import get_swagger_view
-from conditec.system.api import *
+from conditec.system.api import logout
+from conditec.system.router import routers as sys_routers
+from raw.router import routers as raw_routers
 
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'groups', GroupViewSet)
+
+for r in sys_routers:
+    router.register(*r)
+
+for r in raw_routers:
+    router.register(*r)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('docs/', get_swagger_view(title='CondiTec API Docs')),
-    path('api/me/', get_user_info, name='me'),
     path('api/auth/', obtain_auth_token, name='auth'),
+    path('api/logout/', logout, name='logout'),
     re_path(r'^api/', include(router.urls), name="rest_framework"),
     path('', TemplateView.as_view(template_name='index.html')),
     # re_path('category(/(?P<action>[a-z]\w*))?(/(?P<id>\d+))?', CategoryController.as_view()),

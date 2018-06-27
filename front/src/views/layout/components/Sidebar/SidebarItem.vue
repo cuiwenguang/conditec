@@ -43,17 +43,6 @@ export default {
       type: Boolean,
       default: false
     }
-  },
-  methods: {
-    hasOneShowingChildren(children) {
-      const showingChildren = children.filter(item => {
-        return !item.hidden
-      })
-      if (showingChildren.length === 1) {
-        return true
-      }
-      return false
-    }
   }
 }
 </script>
